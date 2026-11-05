@@ -146,3 +146,18 @@ invalid generated data. Additional attempts may incur usage. If all attempts
 fail with provider overload (503), the UI explains that Gemini is busy; it does
 not blame your internet connection or add invented tasks. Automatic fallback
 cannot guarantee provider capacity. Manual board functions remain available.
+
+
+### Open index.html directly
+
+You can double-click `index.html` to use the regular board without Node or a web
+server. Adding, deleting, completion, drag/drop, and keyboard status controls work
+in this mode. Browser scripts use ordinary deferred scripts, so they do not
+require module imports over HTTP. AI controls display startup instructions and
+are disabled until you open the Express-served app; the API key stays server-side.
+
+Browsers may restrict localStorage for local files. The board attempts to save
+normally and shows a warning if storage is unavailable. File-mode data and
+`http://127.0.0.1:3000` data have separate storage; keep using the same address
+for a consistent saved board. Reliable persistence across browsers is best
+supported through `npm start`.

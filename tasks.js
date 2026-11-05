@@ -1,3 +1,4 @@
+(() => {
 const taskInput = document.getElementById("taskInput");
 const columns = Array.from(document.querySelectorAll(".column"));
 const storageKey = "task-tracker-tasks";
@@ -172,7 +173,7 @@ try {
 updateCounts();
 
 // Called only after explicit approval in the AI review panel.
-export function addApprovedTasks(tasks) {
+function addApprovedTasks(tasks) {
     tasks.forEach(({ title, description, priority, estimatedMinutes }) => {
         renderTask(title, "todo", { description, priority, estimatedMinutes });
     });
@@ -180,3 +181,6 @@ export function addApprovedTasks(tasks) {
     saveTasks();
     document.getElementById("announcement").textContent = `${tasks.length} approved tasks added to To Do.`;
 }
+
+window.TaskTracker = Object.freeze({ addApprovedTasks });
+})();

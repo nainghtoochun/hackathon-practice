@@ -56,7 +56,7 @@ export function createApp({ generate = createTaskGenerator({ apiKey: process.env
     });
     app.use('/api', (req, res) => res.status(404).json({ error: 'API route not found.' }));
     // Explicit public-file allowlist: .env, source, tests, and node_modules are never served.
-    for (const file of ['index.html', 'style.css', 'tasks.js', 'ai-tasks.js', 'task-schema.js']) {
+    for (const file of ['index.html', 'style.css', 'tasks.js', 'ai-tasks.js', 'task-schema.js', 'task-data.js']) {
         app.get(file === 'index.html' ? ['/', '/index.html'] : `/${file}`, (req, res) => res.sendFile(path.join(root, file)));
     }
     app.use((error, req, res, next) => {
