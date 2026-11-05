@@ -11,7 +11,18 @@ function addTask() {
     }
 
     const li = document.createElement("li");
-    li.textContent = task;
+    const label = document.createElement("label");
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+
+    const taskText = document.createElement("span");
+    taskText.textContent = task;
+    checkbox.addEventListener("change", () => {
+        taskText.classList.toggle("completed", checkbox.checked);
+    });
+
+    label.append(checkbox, taskText);
+    li.appendChild(label);
 
     const deleteBtn = document.createElement("button");
     deleteBtn.type = "button";

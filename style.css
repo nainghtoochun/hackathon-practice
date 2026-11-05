@@ -42,3 +42,20 @@ li {
     border-radius: 6px;
     text-align: left;
 }
+
+li label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+}
+
+li button {
+    flex-shrink: 0;
+}
+
+.completed {
+    text-decoration: line-through;
+}
