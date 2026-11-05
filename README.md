@@ -59,8 +59,9 @@ sensitive information. Normal board tasks stay in this browser's localStorage.
 
 On each generation, the server lists models accessible to the configured key and
 selects an available stable Gemini Flash text model supporting `generateContent`.
-It prefers `gemini-3-flash` or `gemini-2.5-flash` when listed, otherwise chooses an
-available stable Flash model. To select a specific accessible Flash model
+It prefers the newest listed stable version of Flash. Model discovery can still
+include models unavailable to new users; use an explicit `GEMINI_MODEL` override
+when Google recommends a specific replacement. To select a specific accessible Flash model
 (including a preview if desired), set `GEMINI_MODEL` to its exact model ID. If no
 matching model is available, generation fails clearly rather than assuming
 project access. The model is requested to return schema-constrained JSON; the
@@ -79,7 +80,7 @@ and [Gemini model documentation](https://ai.google.dev/gemini-api/docs/models).
 - Same-origin browser requests only; no permissive CORS. JSON bodies are limited
   to 4 KB, with server-side goal validation.
 - Five API requests per minute per IP, two concurrent generations per process,
-  and a 30-second server timeout (35 seconds in the browser).
+  and a 90-second server timeout (95 seconds in the browser).
 - Generation errors never return raw upstream details. No prompts or keys are
   logged by the application. Only an explicit allowlist of public assets is served.
 - This is a local development app, not a public multi-user service. Before exposing

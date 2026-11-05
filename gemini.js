@@ -13,7 +13,10 @@ export function createTaskGenerator({ apiKey, model = '', client } = {}) {
             if (name && /^gemini-.*flash/.test(name) && !/image|audio|live|tts/.test(name) && item.supportedActions?.includes('generateContent')) models.push(name);
         }
         const stable = models.filter((name) => !/preview|exp|latest/.test(name));
-        const selected = model || ['gemini-3-flash', 'gemini-2.5-flash'].find((name) => stable.includes(name)) || stable.sort((a, b) => b.localeCompare(a, undefined, { numeric: true }))[0];
+        // Discovery can list retired models: prefer newer stable versions, not 2.5.
+        const versioned = stable.filter((name) => /^gemini-\d/.test(name));
+        const selected = model.trim().replace(/^models\//, '') ||
+            (versioned.length ? versioned : stable).sort((a, b) => b.localeCompare(a, undefined, { numeric: true }))[0];
         if (!selected || !models.includes(selected)) {
             throw Object.assign(new Error('No supported Flash model is available. Check project access or set GEMINI_MODEL to an available Flash model ID.'), { statusCode: 503 });
         }

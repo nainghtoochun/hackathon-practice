@@ -8,7 +8,7 @@ import { validateSuggestions } from './task-schema.js';
 import { generationError } from './generation-error.js';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
-export function createApp({ generate = createTaskGenerator({ apiKey: process.env.GEMINI_API_KEY, model: process.env.GEMINI_MODEL }), timeoutMs = 30000 } = {}) {
+export function createApp({ generate = createTaskGenerator({ apiKey: process.env.GEMINI_API_KEY, model: process.env.GEMINI_MODEL }), timeoutMs = 90000 } = {}) {
     const app = express();
     app.disable('x-powered-by');
     app.use(helmet());

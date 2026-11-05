@@ -40,9 +40,9 @@ form.addEventListener('submit', async (event) => {
     generateBtn.disabled = true;
     goal.readOnly = true;
     form.setAttribute('aria-busy', 'true');
-    status.textContent = 'Turning your goal into tasks…';
+    status.textContent = 'Turning your goal into tasks… This can take up to 90 seconds.';
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 35000);
+    const timer = setTimeout(() => controller.abort(), 95000);
     try {
         const response = await fetch('/api/generate-tasks', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },

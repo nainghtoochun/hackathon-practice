@@ -115,3 +115,33 @@ test('safe diagnostic codes distinguish access, quota, model and output failures
         assert.ok(!JSON.stringify(body).includes('private-key-and-prompt'));
     }
 });
+
+
+test('automatic selection prefers a newer stable Flash over a listed retired model', async () => {
+    let selected;
+    const client = { models: {
+        list: async () => (async function* () {
+            for (const name of ['gemini-2.5-flash', 'gemini-3.8-flash', 'gemini-3.8-flash-tts', 'gemini-3.9-flash-preview']) {
+                yield { name: `models/${name}`, supportedActions: ['generateContent'] };
+            }
+        })(),
+        generateContent: async params => { selected = params.model; return { text: JSON.stringify({ tasks: [task] }) }; },
+    } };
+    await createTaskGenerator({ client })('Plan demo');
+    assert.equal(selected, 'gemini-3.8-flash');
+    await createTaskGenerator({ client, model: ' models/gemini-3.8-flash ' })('Plan demo');
+    assert.equal(selected, 'gemini-3.8-flash');
+});
+
+test('a slow generation can complete within its deadline', async t => {
+    const { post } = await start(t, {
+        timeoutMs: 1000,
+        generate: async () => {
+            await new Promise(resolve => setTimeout(resolve, 150));
+            return { tasks: [task] };
+        },
+    });
+    const response = await post({ goal: 'Prepare a demo' });
+    assert.equal(response.status, 200);
+    assert.deepEqual((await response.json()).tasks, [task]);
+});
