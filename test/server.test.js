@@ -103,6 +103,7 @@ test('safe diagnostic codes distinguish access, quota, model and output failures
         [{ status: 403 }, 'GEMINI_ACCESS_DENIED', 502],
         [{ status: 404 }, 'GEMINI_MODEL_UNAVAILABLE', 502],
         [{ status: 429 }, 'GEMINI_QUOTA', 429],
+        [{ status: 503 }, 'GEMINI_BUSY', 503],
         [{ code: 'AI_INVALID_RESPONSE' }, 'AI_INVALID_RESPONSE', 502],
         [{ code: 'AI_BLOCKED' }, 'AI_BLOCKED', 422],
     ];
@@ -144,4 +145,83 @@ test('a slow generation can complete within its deadline', async t => {
     const response = await post({ goal: 'Prepare a demo' });
     assert.equal(response.status, 200);
     assert.deepEqual((await response.json()).tasks, [task]);
+});
+
+
+function fakeGemini(names, generate) {
+    return { models: {
+        list: async () => (async function* () {
+            for (const name of names) yield { name: `models/${name}`, supportedActions: ['generateContent'] };
+        })(),
+        generateContent: generate,
+    } };
+}
+const validResponse = () => ({ text: JSON.stringify({ tasks: [task] }) });
+
+test('busy or retired configured models fall back to another discovered stable model', async () => {
+    for (const status of [503, 404]) {
+        const calls = [];
+        const client = fakeGemini(['gemini-3.8-flash', 'gemini-3.1-flash-lite'], async ({ model }) => {
+            calls.push(model);
+            if (model === 'gemini-3.8-flash') throw Object.assign(Error('provider detail'), { status });
+            return validResponse();
+        });
+        const result = await createTaskGenerator({ client, model: 'gemini-3.8-flash', retryDelayMs: 0 })('Prepare demo');
+        assert.equal(result.model, 'gemini-3.1-flash-lite');
+        assert.deepEqual(result.tasks, [task]);
+        assert.deepEqual(calls, ['gemini-3.8-flash', 'gemini-3.1-flash-lite']);
+    }
+});
+
+test('transient retries recover and stop after four attempts when all models are busy', async () => {
+    let calls = 0;
+    const client = fakeGemini(['gemini-3.8-flash'], async () => {
+        calls++;
+        if (calls < 3) throw Object.assign(Error('busy'), { status: 503 });
+        return validResponse();
+    });
+    await createTaskGenerator({ client, retryDelayMs: 0 })('Prepare demo');
+    assert.equal(calls, 3);
+    calls = 0;
+    client.models.generateContent = async () => { calls++; throw Object.assign(Error('busy'), { status: 503 }); };
+    await assert.rejects(createTaskGenerator({ client, retryDelayMs: 0 })('Prepare demo'), { status: 503 });
+    assert.equal(calls, 4);
+});
+
+test('auth, quota, bad requests and safety blocks do not trigger fallback calls', async () => {
+    for (const status of [400, 401, 403, 429]) {
+        let calls = 0;
+        const client = fakeGemini(['gemini-3.8-flash', 'gemini-3.1-flash-lite'], async () => {
+            calls++; throw Object.assign(Error('rejected'), { status });
+        });
+        await assert.rejects(createTaskGenerator({ client, retryDelayMs: 0 })('Prepare demo'), { status });
+        assert.equal(calls, 1);
+    }
+    let calls = 0;
+    const client = fakeGemini(['gemini-3.8-flash'], async () => {
+        calls++; return { promptFeedback: { blockReason: 'SAFETY' } };
+    });
+    await assert.rejects(createTaskGenerator({ client })('Prepare demo'), { code: 'AI_BLOCKED' });
+    assert.equal(calls, 1);
+});
+
+test('slow model attempts time out independently and fall back', async () => {
+    const client = fakeGemini(['gemini-3.8-flash', 'gemini-3.1-flash-lite'], async ({ model }) => {
+        if (model === 'gemini-3.8-flash') return new Promise(() => {});
+        return validResponse();
+    });
+    const result = await createTaskGenerator({ client, retryDelayMs: 0, attemptTimeoutMs: 20 })('Prepare demo');
+    assert.equal(result.model, 'gemini-3.1-flash-lite');
+});
+
+test('cancellation stops active requests and prevents subsequent retries', async () => {
+    let calls = 0;
+    const controller = new AbortController();
+    const client = fakeGemini(['gemini-3.8-flash'], async () => { calls++; return new Promise(() => {}); });
+    const pending = createTaskGenerator({ client, retryDelayMs: 0 })('Prepare demo', controller.signal);
+    setTimeout(() => controller.abort(), 10);
+    await assert.rejects(pending, { name: 'AbortError' });
+    assert.equal(calls, 1);
+    await assert.rejects(createTaskGenerator({ client })('Prepare demo', controller.signal), { name: 'AbortError' });
+    assert.equal(calls, 1);
 });

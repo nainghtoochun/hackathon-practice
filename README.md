@@ -129,3 +129,20 @@ a fixed diagnostic code (never a key, goal, or raw Google error).
 
 After changing `.env`, stop the server with Ctrl+C and rerun `npm start`. Never
 share the key or the contents of `.env` when asking for troubleshooting help.
+
+
+### Automatic recovery from overloaded or retired models
+
+The configured model is tried first. Generation failures with HTTP 404 skip that
+model; transient HTTP 500/502/503/504 failures retry with short backoff, preferring
+other listed stable Flash models (Lite alternatives first). At most four
+SDK generation calls are made per user request, each capped at 18 seconds,
+within the existing 90-second server deadline. SDK-level automatic retries are
+disabled to prevent nested retry loops. Model listing has a 10-second deadline.
+Cancellation stops further attempts. The server returns the actual model used.
+
+No retry is made for auth errors, quota (429), bad requests, blocked goals, or
+invalid generated data. Additional attempts may incur usage. If all attempts
+fail with provider overload (503), the UI explains that Gemini is busy; it does
+not blame your internet connection or add invented tasks. Automatic fallback
+cannot guarantee provider capacity. Manual board functions remain available.
