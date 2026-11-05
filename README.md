@@ -108,3 +108,23 @@ For a live check, configure a valid replacement `GEMINI_API_KEY`, start the serv
 generate a small goal, review the suggestions, approve one, and refresh. Live
 project model access and quota were not verified during implementation because
 no server-side key was configured.
+
+
+### Troubleshoot generation failures
+
+The error shown below the AI form now distinguishes access restrictions, quota,
+model availability, and invalid generated data. The server terminal also prints
+a fixed diagnostic code (never a key, goal, or raw Google error).
+
+- `GEMINI_ACCESS_DENIED` / `GEMINI_REQUEST_REJECTED`: check the server-side key,
+  project/API restrictions, and region eligibility in Google AI Studio.
+- `GEMINI_QUOTA`: check the selected project's Gemini quota and billing.
+- `GEMINI_MODEL_UNAVAILABLE` / `AI_CONFIGURATION`: clear an outdated
+  `GEMINI_MODEL` override, confirm `GEMINI_API_KEY` is set, then restart.
+- `AI_INVALID_RESPONSE`: the generated JSON was incomplete or failed validation;
+  retry with a smaller goal.
+- `AI_BLOCKED`: rephrase the goal.
+- `GEMINI_UNAVAILABLE` / `AI_TIMEOUT`: check outbound network access and retry.
+
+After changing `.env`, stop the server with Ctrl+C and rerun `npm start`. Never
+share the key or the contents of `.env` when asking for troubleshooting help.

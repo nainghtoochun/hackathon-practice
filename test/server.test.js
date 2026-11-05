@@ -92,5 +92,26 @@ test('official SDK integration discovers an accessible Flash model and requests 
     assert.ok(request.config.abortSignal instanceof AbortSignal);
     await assert.rejects(createTaskGenerator({ client, model: 'gemini-unavailable-flash' })('Plan demo'), { statusCode: 503 });
     client.models.generateContent = async () => ({ text: '{bad JSON' });
-    await assert.rejects(createTaskGenerator({ client })('Plan demo'), SyntaxError);
+    await assert.rejects(createTaskGenerator({ client })('Plan demo'), { code: 'AI_INVALID_RESPONSE' });
+});
+
+
+test('safe diagnostic codes distinguish access, quota, model and output failures', async t => {
+    const cases = [
+        [{ status: 400 }, 'GEMINI_REQUEST_REJECTED', 502],
+        [{ status: 401 }, 'GEMINI_ACCESS_DENIED', 502],
+        [{ status: 403 }, 'GEMINI_ACCESS_DENIED', 502],
+        [{ status: 404 }, 'GEMINI_MODEL_UNAVAILABLE', 502],
+        [{ status: 429 }, 'GEMINI_QUOTA', 429],
+        [{ code: 'AI_INVALID_RESPONSE' }, 'AI_INVALID_RESPONSE', 502],
+        [{ code: 'AI_BLOCKED' }, 'AI_BLOCKED', 422],
+    ];
+    for (const [properties, code, status] of cases) {
+        const { post } = await start(t, { generate: async () => { throw Object.assign(new Error('private-key-and-prompt'), properties); } });
+        const response = await post({ goal: 'Prepare demo' });
+        assert.equal(response.status, status);
+        const body = await response.json();
+        assert.equal(body.code, code);
+        assert.ok(!JSON.stringify(body).includes('private-key-and-prompt'));
+    }
 });

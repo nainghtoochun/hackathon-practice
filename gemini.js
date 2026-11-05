@@ -26,6 +26,14 @@ export function createTaskGenerator({ apiKey, model = '', client } = {}) {
                 maxOutputTokens: 4096, abortSignal: signal,
             },
         });
-        return { tasks: validateSuggestions(JSON.parse(response.text)), model: selected };
+        if (response.promptFeedback?.blockReason || response.candidates?.some((candidate) =>
+            ['SAFETY', 'BLOCKLIST', 'PROHIBITED_CONTENT', 'RECITATION'].includes(candidate.finishReason))) {
+            throw Object.assign(new Error('Generation blocked.'), { code: 'AI_BLOCKED' });
+        }
+        try {
+            return { tasks: validateSuggestions(JSON.parse(response.text)), model: selected };
+        } catch {
+            throw Object.assign(new Error('Invalid generated tasks.'), { code: 'AI_INVALID_RESPONSE' });
+        }
     };
 }

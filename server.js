@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { createTaskGenerator } from './gemini.js';
 import { validateSuggestions } from './task-schema.js';
+import { generationError } from './generation-error.js';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 export function createApp({ generate = createTaskGenerator({ apiKey: process.env.GEMINI_API_KEY, model: process.env.GEMINI_MODEL }), timeoutMs = 30000 } = {}) {
@@ -43,12 +44,10 @@ export function createApp({ generate = createTaskGenerator({ apiKey: process.env
             const result = await Promise.race([generate(goal.trim(), controller.signal), timeout]);
             res.json({ tasks: validateSuggestions(result), model: result.model });
         } catch (error) {
-            // Never return upstream errors, prompts, SDK request details, or credentials.
-            const status = [503, 504].includes(error.statusCode) ? error.statusCode : Number(error.status) === 429 ? 429 : 502;
-            const message = status === 503 ? 'AI generation is not configured or no supported Flash model is available. Check server configuration.' :
-                status === 504 ? 'Generation timed out. Please try again.' :
-                status === 429 ? 'Gemini quota is temporarily exhausted. Please try again later.' : 'Could not generate valid tasks. Please try again.';
-            if (!res.destroyed) res.status(status).json({ error: message });
+            const failure = generationError(error);
+            // Fixed diagnostic fields only: no key, prompt, URL, or upstream message.
+            console.warn('AI generation failed:', failure.code);
+            if (!res.destroyed) res.status(failure.status).json({ error: failure.error, code: failure.code });
         } finally {
             clearTimeout(timer);
             res.off('close', disconnected);
