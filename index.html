@@ -2,18 +2,41 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Hackathon Task Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Task Tracker · Your workspace</title>
     <link rel="stylesheet" href="style.css" />
+    <script src="tasks.js" defer></script>
   </head>
   <body>
-    <h1>Our Task Tracker</h1>
-    <p>Built collaboratively using GitHub! by kelvin the goat</p>
-
-    <input type="text" id="taskInput" placeholder="Enter a task" />
-    <button id="addTaskBtn">Add Task</button>
-
-    <ul id="taskList"></ul>
-
-    <script src="tasks.js"></script>
+    <main class="workspace">
+      <header class="page-header">
+        <div><p class="eyebrow">YOUR WORKSPACE</p><h1>Task Tracker<span class="title-dot">.</span></h1>
+        <p class="subtitle">A little structure. A lot of possibility.</p></div>
+        <span class="workspace-badge">Personal board</span>
+      </header>
+      <form id="taskForm" class="composer">
+        <label for="taskInput">What’s next?</label>
+        <div class="composer-row"><input type="text" id="taskInput" placeholder="Give your next task a name…" autocomplete="off" />
+        <button id="addTaskBtn" type="submit">+ Add Task</button></div>
+      </form>
+      <div class="board-heading"><h2>Your board</h2><p id="boardHelp">Drag cards between columns, or use each card’s status menu.</p></div>
+      <div class="board" aria-describedby="boardHelp">
+        <section class="column" data-status="todo" aria-labelledby="todoHeading">
+          <header class="column-header"><h3 id="todoHeading"><span class="status-dot"></span>To Do</h3><span class="count" aria-label="To Do task count">0</span></header>
+          <ul id="taskList" class="task-list" aria-label="To Do tasks"></ul><p class="empty-state">A fresh start. Add a task above.</p>
+        </section>
+        <section class="column" data-status="in-progress" aria-labelledby="progressHeading">
+          <header class="column-header"><h3 id="progressHeading"><span class="status-dot"></span>In Progress</h3><span class="count" aria-label="In Progress task count">0</span></header>
+          <ul class="task-list" aria-label="In Progress tasks"></ul><p class="empty-state">Make room for your next big thing.</p>
+        </section>
+        <section class="column" data-status="done" aria-labelledby="doneHeading">
+          <header class="column-header"><h3 id="doneHeading"><span class="status-dot"></span>Done</h3><span class="count" aria-label="Done task count">0</span></header>
+          <ul class="task-list" aria-label="Done tasks"></ul><p class="empty-state">Good work belongs here.</p>
+        </section>
+      </div>
+      <p id="announcement" class="sr-only" role="status" aria-live="polite"></p>
+      <p id="storageNotice" class="storage-notice" role="status" hidden></p>
+      <footer>One task at a time. <span>Built collaboratively using GitHub.</span></footer>
+    </main>
   </body>
 </html>
