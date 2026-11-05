@@ -59,8 +59,9 @@ sensitive information. Normal board tasks stay in this browser's localStorage.
 
 On each generation, the server lists models accessible to the configured key and
 selects an available stable Gemini Flash text model supporting `generateContent`.
-It prefers `gemini-3-flash` or `gemini-2.5-flash` when listed, otherwise chooses an
-available stable Flash model. To select a specific accessible Flash model
+It prefers the newest listed stable version of Flash. Model discovery can still
+include models unavailable to new users; use an explicit `GEMINI_MODEL` override
+when Google recommends a specific replacement. To select a specific accessible Flash model
 (including a preview if desired), set `GEMINI_MODEL` to its exact model ID. If no
 matching model is available, generation fails clearly rather than assuming
 project access. The model is requested to return schema-constrained JSON; the
@@ -79,7 +80,7 @@ and [Gemini model documentation](https://ai.google.dev/gemini-api/docs/models).
 - Same-origin browser requests only; no permissive CORS. JSON bodies are limited
   to 4 KB, with server-side goal validation.
 - Five API requests per minute per IP, two concurrent generations per process,
-  and a 30-second server timeout (35 seconds in the browser).
+  and a 90-second server timeout (95 seconds in the browser).
 - Generation errors never return raw upstream details. No prompts or keys are
   logged by the application. Only an explicit allowlist of public assets is served.
 - This is a local development app, not a public multi-user service. Before exposing
@@ -108,3 +109,55 @@ For a live check, configure a valid replacement `GEMINI_API_KEY`, start the serv
 generate a small goal, review the suggestions, approve one, and refresh. Live
 project model access and quota were not verified during implementation because
 no server-side key was configured.
+
+
+### Troubleshoot generation failures
+
+The error shown below the AI form now distinguishes access restrictions, quota,
+model availability, and invalid generated data. The server terminal also prints
+a fixed diagnostic code (never a key, goal, or raw Google error).
+
+- `GEMINI_ACCESS_DENIED` / `GEMINI_REQUEST_REJECTED`: check the server-side key,
+  project/API restrictions, and region eligibility in Google AI Studio.
+- `GEMINI_QUOTA`: check the selected project's Gemini quota and billing.
+- `GEMINI_MODEL_UNAVAILABLE` / `AI_CONFIGURATION`: clear an outdated
+  `GEMINI_MODEL` override, confirm `GEMINI_API_KEY` is set, then restart.
+- `AI_INVALID_RESPONSE`: the generated JSON was incomplete or failed validation;
+  retry with a smaller goal.
+- `AI_BLOCKED`: rephrase the goal.
+- `GEMINI_UNAVAILABLE` / `AI_TIMEOUT`: check outbound network access and retry.
+
+After changing `.env`, stop the server with Ctrl+C and rerun `npm start`. Never
+share the key or the contents of `.env` when asking for troubleshooting help.
+
+
+### Automatic recovery from overloaded or retired models
+
+The configured model is tried first. Generation failures with HTTP 404 skip that
+model; transient HTTP 500/502/503/504 failures retry with short backoff, preferring
+other listed stable Flash models (Lite alternatives first). At most four
+SDK generation calls are made per user request, each capped at 18 seconds,
+within the existing 90-second server deadline. SDK-level automatic retries are
+disabled to prevent nested retry loops. Model listing has a 10-second deadline.
+Cancellation stops further attempts. The server returns the actual model used.
+
+No retry is made for auth errors, quota (429), bad requests, blocked goals, or
+invalid generated data. Additional attempts may incur usage. If all attempts
+fail with provider overload (503), the UI explains that Gemini is busy; it does
+not blame your internet connection or add invented tasks. Automatic fallback
+cannot guarantee provider capacity. Manual board functions remain available.
+
+
+### Open index.html directly
+
+You can double-click `index.html` to use the regular board without Node or a web
+server. Adding, deleting, completion, drag/drop, and keyboard status controls work
+in this mode. Browser scripts use ordinary deferred scripts, so they do not
+require module imports over HTTP. AI controls display startup instructions and
+are disabled until you open the Express-served app; the API key stays server-side.
+
+Browsers may restrict localStorage for local files. The board attempts to save
+normally and shows a warning if storage is unavailable. File-mode data and
+`http://127.0.0.1:3000` data have separate storage; keep using the same address
+for a consistent saved board. Reliable persistence across browsers is best
+supported through `npm start`.
