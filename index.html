@@ -3,40 +3,41 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Task Tracker · Your workspace</title>
+    <title>Task Tracker · A little room to focus</title>
     <link rel="stylesheet" href="style.css" />
     <script src="tasks.js" defer></script>
   </head>
   <body>
+    <div class="app-bar"><a class="brand" href="./" aria-label="Task Tracker home"><span class="brand-mark" aria-hidden="true">✓</span> task tracker</a><span class="app-bar-note">A little room to focus.</span><span class="personal-label"><span aria-hidden="true">●</span> Personal workspace</span></div>
     <main class="workspace">
       <header class="page-header">
-        <div><p class="eyebrow">YOUR WORKSPACE</p><h1>Task Tracker<span class="title-dot">.</span></h1>
-        <p class="subtitle">A little structure. A lot of possibility.</p></div>
-        <span class="workspace-badge">Personal board</span>
+        <div><p class="eyebrow">LESS NOISE. MORE FOCUS.</p><h1>Make space for<br />what matters<span class="title-dot">.</span></h1>
+        <p class="subtitle">Gather your thoughts, find your rhythm, and take it one task at a time.</p></div>
+        <div class="workspace-badge"><span aria-hidden="true">✳</span><p>Small steps.<br /><em>Good things ahead.</em></p></div>
       </header>
       <form id="taskForm" class="composer">
-        <label for="taskInput">What’s next?</label>
-        <div class="composer-row"><input type="text" id="taskInput" placeholder="Give your next task a name…" autocomplete="off" />
-        <button id="addTaskBtn" type="submit">+ Add Task</button></div>
+        <label for="taskInput">A fresh thought, a next step…</label>
+        <div class="composer-row"><input type="text" id="taskInput" placeholder="What would you like to work on?" autocomplete="off" />
+        <button id="addTaskBtn" type="submit">Add task <span aria-hidden="true">↗</span></button></div>
       </form>
-      <div class="board-heading"><h2>Your board</h2><p id="boardHelp">Drag cards between columns, or use each card’s status menu.</p></div>
+      <div class="board-heading"><h2>Your board <span class="board-view">/ Overview</span></h2><p id="boardHelp">Move things along. Drag a card or change its status.</p></div>
       <div class="board" aria-describedby="boardHelp">
         <section class="column" data-status="todo" aria-labelledby="todoHeading">
           <header class="column-header"><h3 id="todoHeading"><span class="status-dot"></span>To Do</h3><span class="count" aria-label="To Do task count">0</span></header>
-          <ul id="taskList" class="task-list" aria-label="To Do tasks"></ul><p class="empty-state">A fresh start. Add a task above.</p>
+          <ul id="taskList" class="task-list" aria-label="To Do tasks"></ul><p class="empty-state"><span class="empty-symbol" aria-hidden="true">＋</span>A little possibility.<br />Add your first task above.</p>
         </section>
         <section class="column" data-status="in-progress" aria-labelledby="progressHeading">
           <header class="column-header"><h3 id="progressHeading"><span class="status-dot"></span>In Progress</h3><span class="count" aria-label="In Progress task count">0</span></header>
-          <ul class="task-list" aria-label="In Progress tasks"></ul><p class="empty-state">Make room for your next big thing.</p>
+          <ul class="task-list" aria-label="In Progress tasks"></ul><p class="empty-state"><span class="empty-symbol" aria-hidden="true">↗</span>Find your flow.<br />Move a task here when you begin.</p>
         </section>
         <section class="column" data-status="done" aria-labelledby="doneHeading">
           <header class="column-header"><h3 id="doneHeading"><span class="status-dot"></span>Done</h3><span class="count" aria-label="Done task count">0</span></header>
-          <ul class="task-list" aria-label="Done tasks"></ul><p class="empty-state">Good work belongs here.</p>
+          <ul class="task-list" aria-label="Done tasks"></ul><p class="empty-state"><span class="empty-symbol" aria-hidden="true">✓</span>Look how far you’ve come.<br />Completed tasks will live here.</p>
         </section>
       </div>
       <p id="announcement" class="sr-only" role="status" aria-live="polite"></p>
       <p id="storageNotice" class="storage-notice" role="status" hidden></p>
-      <footer>One task at a time. <span>Built collaboratively using GitHub.</span></footer>
+      <footer><span class="footer-note">A little progress is still progress.</span><span>Your space. Your pace.</span></footer>
     </main>
   </body>
 </html>
