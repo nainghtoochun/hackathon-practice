@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Task Tracker · A little room to focus</title>
     <link rel="stylesheet" href="style.css" />
-    <script src="tasks.js" defer></script>
+    <script src="ai-tasks.js" type="module"></script>
   </head>
   <body>
     <div class="app-bar"><a class="brand" href="./" aria-label="Task Tracker home"><span class="brand-mark" aria-hidden="true">✓</span> task tracker</a><span class="app-bar-note">A little room to focus.</span><span class="personal-label"><span aria-hidden="true">●</span> Personal workspace</span></div>
@@ -20,6 +20,23 @@
         <div class="composer-row"><input type="text" id="taskInput" placeholder="What would you like to work on?" autocomplete="off" />
         <button id="addTaskBtn" type="submit">Add task <span aria-hidden="true">↗</span></button></div>
       </form>
+      <section class="ai-panel composer" aria-labelledby="aiHeading">
+        <h2 id="aiHeading">AI Generate Tasks</h2>
+        <p class="ai-hint">Start with a goal. Review the suggestions before adding anything to your board.</p>
+        <form id="aiForm">
+          <label for="aiGoal">What would you like to achieve?</label>
+          <textarea id="aiGoal" rows="3" minlength="5" maxlength="1000" required placeholder="For example: prepare a demo for next Friday’s hackathon"></textarea>
+          <div class="ai-actions"><button id="generateBtn" type="submit">Generate suggestions</button><span class="ai-hint">Your goal is sent to Google Gemini. Don’t include sensitive information.</span></div>
+        </form>
+        <p id="aiStatus" role="status" aria-live="polite"></p>
+        <p id="aiError" role="alert" hidden></p>
+        <div id="aiReview" hidden>
+          <h3>Review your suggested tasks</h3>
+          <p class="ai-hint">Select the tasks you want to keep. AI estimates may need adjustment.</p>
+          <ul id="aiSuggestions" class="suggestion-list"></ul>
+          <div class="ai-actions"><button id="approveBtn" type="button">Add selected tasks</button><button id="discardBtn" type="button" class="secondary-button">Discard suggestions</button></div>
+        </div>
+      </section>
       <div class="board-heading"><h2>Your board <span class="board-view">/ Overview</span></h2><p id="boardHelp">Move things along. Drag a card or change its status.</p></div>
       <div class="board" aria-describedby="boardHelp">
         <section class="column" data-status="todo" aria-labelledby="todoHeading">

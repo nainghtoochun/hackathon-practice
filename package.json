@@ -1,26 +1,24 @@
 {
-  "name": "hackathon-practice",
+  "name": "hackathon-task-tracker",
   "version": "1.0.0",
-  "description": "Practicing GitHub collaboration for Fall Hacks 2026",
-  "main": "tasks.js",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.9.0"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node --env-file-if-exists=.env server.js",
+    "dev": "node --env-file-if-exists=.env --watch server.js",
+    "test": "node --test",
+    "test:browser": "node scripts/browser-check.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/nainghtoochun/hackathon-practice.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/nainghtoochun/hackathon-practice/issues"
-  },
-  "homepage": "https://github.com/nainghtoochun/hackathon-practice#readme",
   "dependencies": {
     "@google/genai": "^2.32.0",
-    "dotenv": "^18.0.9",
-    "express": "^5.3.0"
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.3",
+    "helmet": "^8.3.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.64.1"
   }
 }
