@@ -32,6 +32,10 @@ button:hover {
 }
 
 li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
     background-color: white;
     padding: 12px;
     margin: 10px 0;
