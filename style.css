@@ -32,9 +32,18 @@ button:hover {
 }
 
 li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    overflow-wrap: anywhere;
     background-color: white;
     padding: 12px;
     margin: 10px 0;
     border-radius: 6px;
     text-align: left;
+}
+
+li button {
+    flex-shrink: 0;
 }
