@@ -3,9 +3,9 @@ Practicing GitHub collaboration for Fall Hacks 2026
 
 ## Task Tracker
 
-A responsive Kanban board built with HTML, CSS, and vanilla JavaScript. No build
-step or dependencies are required. Serve this directory with
-`python3 -m http.server 8000` and open the app in your browser.
+A responsive Kanban board built with HTML, CSS, and vanilla JavaScript, with a
+small Express server for optional Gemini task generation. No frontend build step
+is required.
 
 - Add a task with the Add Task button or Enter. New tasks start in To Do.
 - Drag cards to To Do, In Progress, or Done. On a keyboard or touch device, use
@@ -26,3 +26,85 @@ and reopening tasks. Move cards with drag and drop and with the keyboard status
 menu, then refresh to verify statuses persist. Existing data under
 `task-tracker-tasks` containing `{text, completed}` should load correctly. Check
 duplicate task names, long text, empty columns, and a narrow mobile viewport.
+
+
+## Run locally (Node.js 22.9 or newer)
+
+```bash
+npm ci
+cp .env.example .env
+# Edit .env: set GEMINI_API_KEY to your own key. Never commit .env.
+npm start
+```
+
+Open `http://127.0.0.1:3000`. For automatic server restarts, run `npm run dev`
+instead. `PORT` defaults to 3000 and `HOST` to 127.0.0.1. Restart the server after
+changing environment variables. Production can inject environment variables
+directly without a .env file. The manual board works without a Gemini key;
+AI requests will return a configuration error until the server has a key.
+
+### AI Generate Tasks
+
+Enter a goal (5–1,000 characters) and choose **Generate suggestions**. Nothing is
+added automatically. Review the proposed titles, descriptions, priorities, and
+estimated durations; deselect unwanted suggestions, then choose **Add selected
+tasks**, or discard them. Approved tasks start in To Do and keep their metadata
+across refreshes, moves, completion, and deletion.
+
+The browser sends only the goal to `POST /api/generate-tasks` on the same origin.
+The Express server calls the official `@google/genai` SDK and reads
+`GEMINI_API_KEY` only from its environment. The key is never returned to the
+browser or stored in localStorage. Goals are sent to Google Gemini; avoid
+sensitive information. Normal board tasks stay in this browser's localStorage.
+
+On each generation, the server lists models accessible to the configured key and
+selects an available stable Gemini Flash text model supporting `generateContent`.
+It prefers `gemini-3-flash` or `gemini-2.5-flash` when listed, otherwise chooses an
+available stable Flash model. To select a specific accessible Flash model
+(including a preview if desired), set `GEMINI_MODEL` to its exact model ID. If no
+matching model is available, generation fails clearly rather than assuming
+project access. The model is requested to return schema-constrained JSON; the
+server and browser independently validate every task. Estimates are integer
+minutes from 5 to 480, with low/medium/high priority, and at most 8 suggestions.
+
+The API requires outbound HTTPS access to `generativelanguage.googleapis.com`.
+Billing, quota, supported regions, API restrictions, and model access must be
+configured in your Google project. A screenshot or a checked-in key is not a safe
+configuration method: revoke exposed keys and put replacements in server
+configuration only. See the [official SDK](https://github.com/googleapis/js-genai)
+and [Gemini model documentation](https://ai.google.dev/gemini-api/docs/models).
+
+### Request safeguards
+
+- Same-origin browser requests only; no permissive CORS. JSON bodies are limited
+  to 4 KB, with server-side goal validation.
+- Five API requests per minute per IP, two concurrent generations per process,
+  and a 30-second server timeout (35 seconds in the browser).
+- Generation errors never return raw upstream details. No prompts or keys are
+  logged by the application. Only an explicit allowlist of public assets is served.
+- This is a local development app, not a public multi-user service. Before exposing
+  it, add authentication and shared quota/rate-limit storage. In-memory limits
+  reset on restart and are per process. Configure proxy trust deliberately if
+  deploying behind a reverse proxy. Aborting a request may not stop provider billing.
+
+### Automated checks
+
+```bash
+npm test
+npx playwright install chromium
+npm run test:browser
+# Or use an installed Chromium:
+CHROMIUM_PATH=/usr/bin/chromium npm run test:browser
+```
+
+Backend tests cover schemas, SDK model discovery/configuration with simulated
+responses, invalid requests, rate/concurrency limits, timeouts, sanitized errors,
+and private-file protection. Browser checks use a simulated AI response and cover
+selective approval, discard, loading/error/retry, persistence of metadata, legacy
+data, adding/deleting/completing tasks, keyboard status changes, drag and drop,
+and mobile overflow. They make no paid Gemini requests.
+
+For a live check, configure a valid replacement `GEMINI_API_KEY`, start the server,
+generate a small goal, review the suggestions, approve one, and refresh. Live
+project model access and quota were not verified during implementation because
+no server-side key was configured.

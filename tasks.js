@@ -15,6 +15,7 @@ function saveTasks() {
         text: card.querySelector(".task-text").textContent,
         status: card.closest(".column").dataset.status,
         completed: card.querySelector("input").checked,
+        ...JSON.parse(card.dataset.details || "{}"),
     }));
     try {
         localStorage.setItem(storageKey, JSON.stringify(tasks));
@@ -43,9 +44,10 @@ function moveTask(card, status) {
     document.getElementById("announcement").textContent = `${card.querySelector(".task-text").textContent} moved to ${statuses[status]}.`;
 }
 
-function renderTask(text, status = "todo") {
+function renderTask(text, status = "todo", details = {}) {
     const card = document.createElement("li");
     card.className = "task-card";
+    card.dataset.details = JSON.stringify(details);
     card.draggable = true;
     const label = document.createElement("label");
     label.className = "task-label";
@@ -91,7 +93,17 @@ function renderTask(text, status = "todo") {
         document.getElementById("announcement").textContent = `${text} deleted.`;
     });
     controls.append(select, deleteBtn);
-    card.append(label, controls);
+    card.appendChild(label);
+    if (details.description) {
+        const description = document.createElement("p");
+        description.className = "task-description";
+        description.textContent = details.description;
+        const metadata = document.createElement("p");
+        metadata.className = "task-metadata";
+        metadata.textContent = `${details.priority} priority · ~${details.estimatedMinutes} min`;
+        card.append(description, metadata);
+    }
+    card.appendChild(controls);
     card.addEventListener("dragstart", (event) => {
         draggedCard = card;
         event.dataTransfer.setData("text/plain", text);
@@ -147,10 +159,24 @@ try {
         if (!task || typeof task.text !== "string") return;
         // Older versions saved only text and a completion flag.
         const status = Object.hasOwn(statuses, task.status) ? task.status : task.completed === true ? "done" : "todo";
-        renderTask(task.text, status);
+        const details = typeof task.description === "string" && task.description.length <= 600 &&
+            ["low", "medium", "high"].includes(task.priority) && Number.isInteger(task.estimatedMinutes) &&
+            task.estimatedMinutes >= 5 && task.estimatedMinutes <= 480
+            ? { description: task.description, priority: task.priority, estimatedMinutes: task.estimatedMinutes } : {};
+        renderTask(task.text, status, details);
     });
 } catch (error) {
     storageWarning();
     console.warn("Saved tasks could not be loaded from localStorage.", error);
 }
 updateCounts();
+
+// Called only after explicit approval in the AI review panel.
+export function addApprovedTasks(tasks) {
+    tasks.forEach(({ title, description, priority, estimatedMinutes }) => {
+        renderTask(title, "todo", { description, priority, estimatedMinutes });
+    });
+    updateCounts();
+    saveTasks();
+    document.getElementById("announcement").textContent = `${tasks.length} approved tasks added to To Do.`;
+}
